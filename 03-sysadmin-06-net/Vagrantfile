@@ -1,0 +1,12 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "spox/ubuntu-arm"
+  config.vm.box_version = "1.0.0"
+  config.vm.provider :vmware_desktop do |vmware|
+    vmware.vmx['displayname'] = "srv-03-sysadmin-06-net"
+    vmware.gui = true
+    vmware.vmx["ethernet0.virtualdev"] = "vmxnet3"
+    vmware.vmx["ethernet0.pcislotnumber"] = "160"
+    vmware.ssh_info_public = true
+    vmware.linked_clone = false
+    end
+end
