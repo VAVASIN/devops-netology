@@ -1,0 +1,62 @@
+# Префикс для LAN сети
+BRIDGE_NET="192.168.1."
+# Префикс для Internal сети
+INTERNAL_NET="192.168.15."
+# Домен который будем использовать для всей площадки
+DOMAIN="sample.com"
+# Массив из хешей, в котором заданы настройки для каждой виртуальной машины
+servers=[
+  {
+    :hostname => "app1." + DOMAIN,
+    :ip => BRIDGE_NET + "150",
+    :ip_int => "1",
+    :ram => 2000
+  },
+  {
+    :hostname => "app2." + DOMAIN,
+    :ip => BRIDGE_NET + "151",
+    :ip_int => "2",
+    :ram => 2000
+  }
+]
+
+distro = "spox/ubuntu-arm"
+ 
+# Входим в Главную конфигурацию vagrant версии 2
+Vagrant.configure(2) do |config|
+    servers.each do |machine|
+        # Применяем конфигурации для каждой машины. Имя машины(как ее будет видно в Vbox GUI) находится в переменной "machine[:hostname]"
+        config.vm.define machine[:hostname] do |node|
+            # Поднять машину из образа "ubuntu 14.04", который мы создали в предыдущей статье
+            node.vm.box = distro
+            # Также, можно указать URL откуда стянуть нужный box если такой есть
+            #node.vm.box_url = "http://files.vagrantup.com/precise64.box"
+            # Пул портов, который будет использоваться для подключения к каждый VM через 127.0.0.1
+            node.vm.usable_port_range = (2200..2250)
+            # Hostname который будет присвоен VM (самой ОС)
+            node.vm.hostname = machine[:hostname]
+            #VBoxManage.exe list bridgedifs overwrite NAT adapter :adapter=>1
+            # Добавление и настройка Bridge сетевого адаптера(моста). Чтобы узнать точное название birdge адаптера, нужно использовать VBoxManage.exe (смотрите ниже)
+            node.vm.network "public_network", ip: machine[:ip], bridge: 'Intel(R) Centrino(R) Wireless-N 130'
+            # Добавление и настройка внутреннего сетевого адаптера (Intnet)
+            node.vm.network "private_network", ip: machine[:ip_int], virtualbox__intnet: "intnet"
+            # Настройка SSH доступа
+            # Домен/IP для подключения
+            #node.ssh.host = machine[:ip]
+            # Для доступа по ранее добавленному ключу
+            #node.ssh.private_key_path = "private_key"
+            # SSH логин пользователя
+            # node.ssh.username = "alex"
+            # SSH пароль
+            node.ssh.password = "vagrant"
+            # Тонкие настройки для конкретного провайдера (в нашем случаи - VBoxManage)
+            node.vm.provider :vmware_desktop do |vmware|
+                vmware.gui = true
+                vmware.vmx["ethernet0.virtualdev"] = "vmxnet3"
+                vmware.vmx["ethernet0.pcislotnumber"] = "160"
+                vmware.vmx['displayname'] = machine[:hostname]
+                vmware.memory = machine[:ram]
+            end
+        end
+    end
+end
