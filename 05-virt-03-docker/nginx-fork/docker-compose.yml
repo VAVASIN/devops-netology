@@ -1,0 +1,8 @@
+version: '3'
+services:
+  nginx:
+    build: nginx
+    volumes:
+      - ./var/log/nginx:/var/log/nginx
+    ports:
+      - 8033:80
