@@ -1,0 +1,12 @@
+version: '3'
+services:
+  debian:
+    image: debian:latest
+    command: yes Hello
+    volumes:
+      - ./data:/data
+  centos:
+    image: centos:latest
+    command: ping 127.0.0.1
+    volumes:
+      - ./data:/data
